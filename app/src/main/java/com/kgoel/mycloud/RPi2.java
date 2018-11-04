@@ -1,13 +1,11 @@
 package com.kgoel.mycloud;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 
 import com.pubnub.api.PNConfiguration;
 import com.pubnub.api.PubNub;
@@ -23,18 +21,13 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity {
+public class RPi2 extends AppCompatActivity {
 
     static final String subscriberKey = "sub-c-b3f1894c-b61b-11e8-9c8c-5aa277adf39c";
     static final String publisherKey = "pub-c-a48eea9b-bec6-437f-a198-c629b1d05c4c";
     static final String subscribeChannel = "Hub Channel";
     static final String publishChannel = "Mobile Channel";
     PubNub pubNub;
-
-    private Devices[] devices = {
-            new Devices (R.string.raspberry_pi_1, R.drawable.rpi1),
-            new Devices (R.string.raspberry_pi_2, R.drawable.rpi1)
-    };
 
     private PubNub pubNubInitialisation() {
         PNConfiguration pnConfiguration = new PNConfiguration();
@@ -43,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 //        pnConfiguration.setSecure(true);
         pnConfiguration.setReconnectionPolicy(PNReconnectionPolicy.LINEAR);
         PubNub pub = new PubNub(pnConfiguration);
-        pub.grant().channels(Arrays.asList(publishChannel,subscribeChannel)).authKeys(Arrays.asList(publisherKey,subscriberKey)).ttl(10000).read(true).write(true);
+        pub.grant().channels(Arrays.asList(publishChannel,subscribeChannel)).authKeys(Arrays.asList(publisherKey,subscriberKey)).ttl(5).read(true).write(true);
         return pub;
     }
 
@@ -93,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        pubNub.subscribe().channels(Arrays.asList(subscribeChannel)).execute();
+        pubNub.subscribe().channels(Arrays.asList(publishChannel)).execute();
     }
 
     private class ServerTask extends AsyncTask<PassClass, Void, Void>{
@@ -129,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("kshitij","Publishing: "+ msg);
                 TransmitObject transmitObject = new TransmitObject();
                 transmitObject.message=msg;
-                transmitObject.deviceType="android";
+                transmitObject.deviceType="Android";
                 pubNubPublish(pubNub, transmitObject);
                 Log.d("kshitij","After pubnub publish iteration: " + i);
             }
@@ -140,40 +133,34 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        GridView gridView = findViewById(R.id.gridview);
-        final GridAdapter gridadapter = new GridAdapter(this, devices);
-        gridView.setAdapter(gridadapter);
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView parent, View view, int position, long id) {
-                Devices device = devices[position];
-
-                Log.d("kshitij","Clicked id: "+ id+" position: "+position);
-//                if(device.getName())
-                if(position==0){
-                    Intent deviceIntent = new Intent(getApplicationContext(), RPi1.class);
-                    startActivity(deviceIntent);
-                }
-                else if(position==1){
-                    Intent deviceIntent2 = new Intent(getApplicationContext(), RPi2.class);
-                    startActivity(deviceIntent2);
-                }
+        setContentView(R.layout.activity_rpi2);
+        setTitle("Raspberry Pi 2");
 
 
+        Switch red = findViewById(R.id.switchRed);
+        Switch yellow = findViewById(R.id.switchYellow);
+        Switch green = findViewById(R.id.switchGreen);
+
+        red.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // do something, the isChecked will be
+                // true if the switch is in the On position
             }
         });
 
-//        Button RaspberryPi1 = findViewById(R.id.button1);
-//        RaspberryPi1.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent deviceIntent = new Intent(getApplicationContext(), rpi1.class);
-//                startActivity(deviceIntent);
-//            }
-//        });
+        yellow.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // do something, the isChecked will be
+                // true if the switch is in the On position
+            }
+        });
+
+        green.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // do something, the isChecked will be
+                // true if the switch is in the On position
+            }
+        });
 
         Log.d("kshitij","Entering pi1 provider");
         pubNub = pubNubInitialisation();
@@ -191,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
 //        passClass.transmitObject.message = testSend;
 //        passClass.pubNub = pubNub;
 //        new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+
     }
 
     @Override

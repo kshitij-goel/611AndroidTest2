@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">My Cloud</string>
+    <string name="raspberry_pi_1">Raspberry Pi 1</string>
+    <string name="raspberry_pi_2">Raspberry Pi 2</string>
+    <string name="over_ride">Over-Ride</string>
+    <string name="red">Red</string>
+    <string name="yellow">Yellow</string>
+    <string name="green">Green</string>
 </resources>
