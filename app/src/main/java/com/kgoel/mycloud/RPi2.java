@@ -163,10 +163,10 @@ public class RPi2 extends AppCompatActivity {
         });
 
         Log.d("kshitij","Entering pi1 provider");
-        pubNub = pubNubInitialisation();
-        Log.d("kshitij","After pubnub initialisation");
-
-        pubNubSubscribe(pubNub);
+//        pubNub = pubNubInitialisation();
+//        Log.d("kshitij","After pubnub initialisation");
+//
+//        pubNubSubscribe(pubNub);
 
         Log.d("kshitij","After pubnub addListener");
         Log.d("kshitij","After pubnub subscribe");

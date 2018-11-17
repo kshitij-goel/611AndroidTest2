@@ -1,6 +1,9 @@
 package com.kgoel.mycloud;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,7 +24,10 @@ import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult;
 
 import org.json.JSONObject;
 
+import java.net.NetworkInterface;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -176,17 +182,17 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
         Log.d("kshitij","Entering pi1 provider");
-        pubNub = pubNubInitialisation();
+//        pubNub = pubNubInitialisation();
         Log.d("kshitij","After pubnub initialisation");
 
-        pubNubSubscribe(pubNub);
+//        pubNubSubscribe(pubNub);
 
         Log.d("kshitij","After pubnub addListener");
         Log.d("kshitij","After pubnub subscribe");
 
 
 
-        String testSend = "Test send from android app to ClientTask";
+//        String testSend = "Test send from android app to ClientTask";
 //        PassClass passClass = new PassClass();
 //        passClass.transmitObject.message = testSend;
 //        passClass.pubNub = pubNub;
@@ -196,21 +202,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        pubNub.unsubscribeAll();
-        new ServerTask().cancel(true);
+//        pubNub.unsubscribeAll();
+//        new ServerTask().cancel(true);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        pubNubSubscribe(pubNub);
-        new ServerTask().cancel(false);
+//        pubNubSubscribe(pubNub);
+//        new ServerTask().cancel(false);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        pubNub.unsubscribeAll();
+//        pubNub.unsubscribeAll();
     }
 
     private class PassClass {

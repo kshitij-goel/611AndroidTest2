@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.pubnub.api.PNConfiguration;
 import com.pubnub.api.PubNub;
@@ -19,7 +20,10 @@ import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult;
 
 import org.json.JSONObject;
 
+import java.net.NetworkInterface;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class RPi1 extends AppCompatActivity {
 
@@ -28,6 +32,91 @@ public class RPi1 extends AppCompatActivity {
     static final String subscribeChannel = "Hub Channel";
     static final String publishChannel = "Mobile Channel";
     PubNub pubNub;
+
+    static boolean overrideStatus = false;
+    static boolean redStatus = false;
+    static boolean yellowStatus = false;
+    static boolean greenStatus = false;
+    static boolean overrideDis = false;
+    static boolean redDis = false;
+    static boolean yellowDis = false;
+    static boolean greenDis = false;
+
+    static String macAddress;
+
+    public static String getStatus(String string){
+        if(string.compareTo("override")==0){
+            if(overrideStatus)
+                return "1";
+            else
+                return "0";
+        }
+        else if(string.compareTo("red")==0){
+            if(redStatus)
+                return "1";
+            else
+                return "0";
+        }
+        else if(string.compareTo("yellow")==0){
+            if(yellowStatus)
+                return "1";
+            else
+                return "0";
+        }
+        else if(string.compareTo("green")==0){
+            if(greenStatus)
+                return "1";
+            else
+                return "0";
+        }
+        return null;
+    }
+    public static String setStatus(String over, String red, String yellow, String green){
+        if(over.compareTo("dis")==0)
+            overrideDis = true;
+        else if(over.compareTo("en")==0)
+            overrideDis = false;
+        if(red.compareTo("dis")==0)
+            redDis = true;
+        else if(red.compareTo("en")==0)
+            redDis = false;
+        if(yellow.compareTo("dis")==0)
+            yellowDis = true;
+        else if(yellow.compareTo("en")==0)
+            yellowDis = false;
+        if(green.compareTo("dis")==0)
+            greenDis = true;
+        else if(green.compareTo("en")==0)
+            greenDis = false;
+        return String.valueOf(overrideDis)+"#"+String.valueOf(redDis)+"#"+String.valueOf(yellowDis)+"#"+String.valueOf(greenDis);
+    }
+
+    public static String getMacAddress() {
+        try {
+            List<NetworkInterface> all = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface nif : all) {
+                if (!nif.getName().equalsIgnoreCase("wlan0")) continue;
+
+                byte[] macBytes = nif.getHardwareAddress();
+                if (macBytes == null) {
+                    return "";
+                }
+
+                StringBuilder res1 = new StringBuilder();
+                for (byte b : macBytes) {
+                    res1.append(Integer.toHexString(b & 0xFF) + ":");
+                }
+
+                if (res1.length() > 0) {
+                    res1.deleteCharAt(res1.length() - 1);
+                }
+                return res1.toString();
+            }
+        } catch (Exception ex) {
+            ex.getLocalizedMessage();
+        }
+        return "";
+    }
 
     private PubNub pubNubInitialisation() {
         PNConfiguration pnConfiguration = new PNConfiguration();
@@ -41,6 +130,7 @@ public class RPi1 extends AppCompatActivity {
     }
 
     private void pubNubPublish(PubNub pubNub, TransmitObject obj){
+        Log.d("kshitij","Pubnub Publishing message: "+obj.message);
         JSONObject jsonObject = obj.toJSON();
         pubNub.publish().message(jsonObject).channel(publishChannel)
                 .async(new PNCallback<PNPublishResult>() {
@@ -86,10 +176,10 @@ public class RPi1 extends AppCompatActivity {
 
             }
         });
-        pubNub.subscribe().channels(Arrays.asList(publishChannel)).execute();
+        pubNub.subscribe().channels(Arrays.asList(subscribeChannel)).execute();
     }
 
-    private class ServerTask extends AsyncTask<PassClass, Void, Void>{
+    private class ServerTask extends AsyncTask<PassClass, String, Void>{
 
         @Override
         protected Void doInBackground(PassClass... passClasses) {
@@ -98,15 +188,42 @@ public class RPi1 extends AppCompatActivity {
                 return null;
             }
             else{
+                String rec = passClass.transmitObject.message;
+                String[] recs = rec.split("#");
+                if(passClass.transmitObject.deviceType.compareTo("android")==0) {
+                    if (recs[3].compareTo("1") == 0 && recs[1].compareTo(macAddress) != 0) {
+                        String send = setStatus("dis", "dis", "dis", "dis");
+                        publishProgress(send);
+                    } else if (recs[3].compareTo("0") == 0 && recs[1].compareTo(macAddress) != 0){
+                        String send = setStatus("en","dis","dis","dis");
+                        publishProgress(send);
+                    }
+                }
+                else if(recs[0].compareTo("hub")==0){
 
-                publishProgress();
+                }
+
             }
             return null;
         }
 
-        @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
+        protected void onProgressUpdate(String... strings) {
+            super.onProgressUpdate(strings);
+            Switch overRide = findViewById(R.id.OverRide_Switch);
+            Switch red = findViewById(R.id.switchRed);
+            Switch yellow = findViewById(R.id.switchYellow);
+            Switch green = findViewById(R.id.switchGreen);
+
+            TextView redText = findViewById(R.id.textViewRed);
+            TextView yellowText = findViewById(R.id.textViewYellow);
+            TextView greenText = findViewById(R.id.textViewGreen);
+
+            String[] recs = strings[0].split("#");
+
+            overRide.setEnabled(Boolean.parseBoolean(recs[0]));
+            red.setEnabled(Boolean.parseBoolean(recs[1]));
+            yellow.setEnabled(Boolean.parseBoolean(recs[2]));
+            green.setEnabled(Boolean.parseBoolean(recs[3]));
         }
     }
 
@@ -114,18 +231,14 @@ public class RPi1 extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(PassClass... passClasses) {
+            TransmitObject transmitObject = new TransmitObject();
             String msgToSend = passClasses[0].transmitObject.message;
+            transmitObject.deviceType=passClasses[0].transmitObject.deviceType;
             PubNub pubNub = passClasses[0].pubNub;
-            Log.d("kshitij","ClientTask msg to send: " + msgToSend);
-            for(int i=0;i<5;i++){
-                String msg="Testing "+i;
-                Log.d("kshitij","Publishing: "+ msg);
-                TransmitObject transmitObject = new TransmitObject();
-                transmitObject.message=msg;
-                transmitObject.deviceType="Android";
-                pubNubPublish(pubNub, transmitObject);
-                Log.d("kshitij","After pubnub publish iteration: " + i);
-            }
+            Log.d("kshitij","Pi1 ClientTask msg to send: " + msgToSend);
+            Log.d("kshitij","Pi1 ClientTask deviceType: " + transmitObject.deviceType);
+            transmitObject.message=msgToSend;
+            pubNubPublish(pubNub, transmitObject);
             return null;
         }
     }
@@ -136,8 +249,29 @@ public class RPi1 extends AppCompatActivity {
         setContentView(R.layout.activity_rpi1);
         setTitle("Raspberry Pi 1");
 
+        macAddress = getMacAddress();
+        Log.d("kshitij","MAC Address: "+ macAddress);
 
-        Switch overRide = findViewById(R.id.OverRide_Switch);
+        Log.d("kshitij","Entering pi1 provider");
+        pubNub = pubNubInitialisation();
+        Log.d("kshitij","After pubnub initialisation");
+
+//        String testSend = "Test send from android app to ClientTask";
+//        passClass.transmitObject.message = testSend;
+        final PassClass passClass = new PassClass();
+        TransmitObject transmitObject = new TransmitObject();
+        passClass.transmitObject = transmitObject;
+        passClass.pubNub = pubNub;
+        passClass.transmitObject.deviceType = "android";
+
+
+
+        pubNubSubscribe(pubNub);
+
+        Log.d("kshitij","After pubnub addListener");
+        Log.d("kshitij","After pubnub subscribe");
+
+        final Switch overRide = findViewById(R.id.OverRide_Switch);
         final Switch red = findViewById(R.id.switchRed);
         final Switch yellow = findViewById(R.id.switchYellow);
         final Switch green = findViewById(R.id.switchGreen);
@@ -152,15 +286,20 @@ public class RPi1 extends AppCompatActivity {
                     red.setEnabled(true);
                     yellow.setEnabled(true);
                     green.setEnabled(true);
+                    overrideStatus = true;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getStatus("override")+"#red#"+getStatus("red")+"#yellow#"+getStatus("yellow")+"#green#"+getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
                 else{
+                    overrideStatus = false;
                     red.setEnabled(false);
                     yellow.setEnabled(false);
                     green.setEnabled(false);
                     red.setChecked(false);
                     yellow.setChecked(false);
                     green.setChecked(false);
-
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getStatus("override")+"#red#"+getStatus("red")+"#yellow#"+getStatus("yellow")+"#green#"+getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -170,7 +309,18 @@ public class RPi1 extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // do something, the isChecked will be
                 // true if the switch is in the On position
-                Log.d("kshitij","Setting red to true");
+                if(isChecked) {
+                    Log.d("kshitij", "Setting red to true");
+                    redStatus = true;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
+                else{
+                    Log.d("kshitij", "Setting red to false");
+                    redStatus = false;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
             }
         });
 
@@ -178,7 +328,18 @@ public class RPi1 extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // do something, the isChecked will be
                 // true if the switch is in the On position
-                Log.d("kshitij","Setting yellow to true");
+                if(isChecked) {
+                    Log.d("kshitij", "Setting yellow to true");
+                    yellowStatus = true;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
+                else{
+                    Log.d("kshitij", "Setting yellow to false");
+                    yellowStatus = false;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
             }
         });
 
@@ -186,47 +347,40 @@ public class RPi1 extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // do something, the isChecked will be
                 // true if the switch is in the On position
-                Log.d("kshitij","Setting green to true");
+                if(isChecked) {
+                    Log.d("kshitij", "Setting green to true");
+                    greenStatus = true;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
+                else{
+                    Log.d("kshitij", "Setting green to false");
+                    greenStatus = false;
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                }
             }
         });
-
-        Log.d("kshitij","Entering pi1 provider");
-        pubNub = pubNubInitialisation();
-        Log.d("kshitij","After pubnub initialisation");
-
-        pubNubSubscribe(pubNub);
-
-        Log.d("kshitij","After pubnub addListener");
-        Log.d("kshitij","After pubnub subscribe");
-
-
-
-        String testSend = "Test send from android app to ClientTask";
-//        PassClass passClass = new PassClass();
-//        passClass.transmitObject.message = testSend;
-//        passClass.pubNub = pubNub;
-//        new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
-
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        pubNub.unsubscribeAll();
-        new ServerTask().cancel(true);
+//        pubNub.unsubscribeAll();
+//        new ServerTask().cancel(true);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        pubNubSubscribe(pubNub);
-        new ServerTask().cancel(false);
+//        pubNubSubscribe(pubNub);
+//        new ServerTask().cancel(false);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        pubNub.unsubscribeAll();
+//        pubNub.unsubscribeAll();
     }
 
     private class PassClass {

@@ -48,4 +48,40 @@
         android:text="@string/green"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/switchYellow" />
+
+    <TextView
+        android:id="@+id/textViewRed"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text=""
+        android:layout_marginTop="124dp"
+        android:layout_marginEnd="300dp"
+        tools:layout_editor_absoluteX="80dp"
+        tools:layout_editor_absoluteY="199dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewYellow"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text=""
+        android:layout_marginTop="76dp"
+        android:layout_marginEnd="300dp"
+        tools:layout_editor_absoluteX="80dp"
+        tools:layout_editor_absoluteY="199dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewRed" />
+
+    <TextView
+        android:id="@+id/textViewGreen"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text=""
+        android:layout_marginTop="76dp"
+        android:layout_marginEnd="300dp"
+        tools:layout_editor_absoluteX="80dp"
+        tools:layout_editor_absoluteY="199dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewYellow" />
 </android.support.constraint.ConstraintLayout>
