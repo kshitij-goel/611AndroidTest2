@@ -1,6 +1,8 @@
 package com.kgoel.mycloud;
 
+import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,7 +46,7 @@ public class RPi1 extends AppCompatActivity {
 
     static String macAddress;
 
-    public static String getStatus(String string){
+    public static String getOnStatus(String string){
         if(string.compareTo("override")==0){
             if(overrideStatus)
                 return "1";
@@ -71,24 +73,40 @@ public class RPi1 extends AppCompatActivity {
         }
         return null;
     }
-    public static String setStatus(String over, String red, String yellow, String green){
-        if(over.compareTo("dis")==0)
+
+    public static void setOnStatus(@Nullable String red, @Nullable String yellow, @Nullable String green){
+        if(red!=null && red.compareTo("0")==0)
+            redStatus = false;
+        else if(red!=null && red.compareTo("1")==0)
+            redStatus = true;
+        if(yellow!=null && yellow.compareTo("0")==0)
+            yellowStatus = false;
+        else if(yellow!=null && yellow.compareTo("1")==0)
+            yellowStatus = true;
+        if(green!=null && green.compareTo("0")==0)
+            greenStatus = false;
+        else if(green!=null && green.compareTo("1")==0)
+            greenStatus = true;
+    }
+
+    public static void setDisStatus(@Nullable String over, @Nullable String red, @Nullable String yellow, @Nullable String green){
+        if(over!=null && over.compareTo("dis")==0)
             overrideDis = true;
-        else if(over.compareTo("en")==0)
+        else if(over!=null && over.compareTo("en")==0)
             overrideDis = false;
-        if(red.compareTo("dis")==0)
+        if(red!=null && red.compareTo("dis")==0)
             redDis = true;
-        else if(red.compareTo("en")==0)
+        else if(red!=null && red.compareTo("en")==0)
             redDis = false;
-        if(yellow.compareTo("dis")==0)
+        if(yellow!=null && yellow.compareTo("dis")==0)
             yellowDis = true;
-        else if(yellow.compareTo("en")==0)
+        else if(yellow!=null && yellow.compareTo("en")==0)
             yellowDis = false;
-        if(green.compareTo("dis")==0)
+        if(green!=null && green.compareTo("dis")==0)
             greenDis = true;
-        else if(green.compareTo("en")==0)
+        else if(green!=null && green.compareTo("en")==0)
             greenDis = false;
-        return String.valueOf(overrideDis)+"#"+String.valueOf(redDis)+"#"+String.valueOf(yellowDis)+"#"+String.valueOf(greenDis);
+//        return String.valueOf(overrideDis)+"#"+String.valueOf(redDis)+"#"+String.valueOf(yellowDis)+"#"+String.valueOf(greenDis);
     }
 
     public static String getMacAddress() {
@@ -161,10 +179,11 @@ public class RPi1 extends AppCompatActivity {
             @Override
             public void message(PubNub pubnub, PNMessageResult message) {
                 TransmitObject transmitObject = new TransmitObject();
+                Log.d("kshitij","////////////////////////////////Received message: "+ message.getMessage());
+                transmitObject.deviceType = String.valueOf(message.getMessage().getAsJsonObject().get("map").getAsJsonObject().get("deviceType").toString().replace("\"", ""));
                 Log.d("kshitij","Listener received message: "+ transmitObject.deviceType);
-                transmitObject.deviceType = String.valueOf(message.getMessage().getAsJsonObject().get("deviceType"));
+                transmitObject.message = String.valueOf(message.getMessage().getAsJsonObject().get("map").getAsJsonObject().get("message").toString().replace("\"", ""));
                 Log.d("kshitij","Listener received message: "+ transmitObject.message);
-                transmitObject.message = String.valueOf(message.getMessage().getAsJsonObject().get("message"));
                 PassClass passClass = new PassClass();
                 passClass.transmitObject = transmitObject;
                 passClass.pubNub = pubnub;
@@ -179,7 +198,7 @@ public class RPi1 extends AppCompatActivity {
         pubNub.subscribe().channels(Arrays.asList(subscribeChannel)).execute();
     }
 
-    private class ServerTask extends AsyncTask<PassClass, String, Void>{
+    private class ServerTask extends AsyncTask<PassClass, Void, Void>{
 
         @Override
         protected Void doInBackground(PassClass... passClasses) {
@@ -190,25 +209,27 @@ public class RPi1 extends AppCompatActivity {
             else{
                 String rec = passClass.transmitObject.message;
                 String[] recs = rec.split("#");
+                Log.d("kshitij","Updating UI with message: "+rec);
                 if(passClass.transmitObject.deviceType.compareTo("android")==0) {
                     if (recs[3].compareTo("1") == 0 && recs[1].compareTo(macAddress) != 0) {
-                        String send = setStatus("dis", "dis", "dis", "dis");
-                        publishProgress(send);
+                        setDisStatus("dis", "dis", "dis", "dis");
+                        publishProgress();
                     } else if (recs[3].compareTo("0") == 0 && recs[1].compareTo(macAddress) != 0){
-                        String send = setStatus("en","dis","dis","dis");
-                        publishProgress(send);
+                        setDisStatus("en","dis","dis","dis");
+                        publishProgress();
                     }
                 }
-                else if(recs[0].compareTo("hub")==0){
-
+                else if(passClass.transmitObject.deviceType.compareTo("hub")==0){
+                    setOnStatus(recs[3], recs[5], recs[7]);
+                    publishProgress();
                 }
 
             }
             return null;
         }
 
-        protected void onProgressUpdate(String... strings) {
-            super.onProgressUpdate(strings);
+        protected void onProgressUpdate(Void... voids) {
+            super.onProgressUpdate(voids);
             Switch overRide = findViewById(R.id.OverRide_Switch);
             Switch red = findViewById(R.id.switchRed);
             Switch yellow = findViewById(R.id.switchYellow);
@@ -218,12 +239,28 @@ public class RPi1 extends AppCompatActivity {
             TextView yellowText = findViewById(R.id.textViewYellow);
             TextView greenText = findViewById(R.id.textViewGreen);
 
-            String[] recs = strings[0].split("#");
+//            String[] recs = strings[0].split("#");
 
-            overRide.setEnabled(Boolean.parseBoolean(recs[0]));
-            red.setEnabled(Boolean.parseBoolean(recs[1]));
-            yellow.setEnabled(Boolean.parseBoolean(recs[2]));
-            green.setEnabled(Boolean.parseBoolean(recs[3]));
+            overRide.setEnabled(!overrideDis);
+            Log.d("kshitij","OverRide disable status: "+ overrideDis);
+            Log.d("kshitij","Red disable status: "+ redDis);
+            Log.d("kshitij","Yellow disable status: "+ yellowDis);
+            Log.d("kshitij","Green disable status: "+ greenDis);
+            red.setChecked(redStatus);
+            yellow.setChecked(yellowStatus);
+            green.setChecked(greenStatus);
+            if(redStatus)
+                redText.setBackgroundColor(Color.parseColor("#fc2828"));
+            else if(!redStatus)
+                redText.setBackgroundColor(Color.parseColor("#ffffff"));
+            if(yellowStatus)
+                yellowText.setBackgroundColor(Color.parseColor("#ffee00"));
+            else if(!yellowStatus)
+                yellowText.setBackgroundColor(Color.parseColor("#ffffff"));
+            if(greenStatus)
+                greenText.setBackgroundColor(Color.parseColor("#0ad100"));
+            else if(!greenStatus)
+                greenText.setBackgroundColor(Color.parseColor("#ffffff"));
         }
     }
 
@@ -231,14 +268,14 @@ public class RPi1 extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(PassClass... passClasses) {
-            TransmitObject transmitObject = new TransmitObject();
-            String msgToSend = passClasses[0].transmitObject.message;
-            transmitObject.deviceType=passClasses[0].transmitObject.deviceType;
-            PubNub pubNub = passClasses[0].pubNub;
-            Log.d("kshitij","Pi1 ClientTask msg to send: " + msgToSend);
-            Log.d("kshitij","Pi1 ClientTask deviceType: " + transmitObject.deviceType);
-            transmitObject.message=msgToSend;
-            pubNubPublish(pubNub, transmitObject);
+//            TransmitObject transmitObject = new TransmitObject();
+//            String msgToSend = passClasses[0].transmitObject.message;
+//            transmitObject.message=msgToSend;
+//            transmitObject.deviceType=passClasses[0].transmitObject.deviceType;
+//            PubNub pubNub = passClasses[0].pubNub;
+//            Log.d("kshitij","Pi1 ClientTask msg to send: " + msgToSend);
+//            Log.d("kshitij","Pi1 ClientTask deviceType: " + transmitObject.deviceType);
+            pubNubPublish(passClasses[0].pubNub, passClasses[0].transmitObject);
             return null;
         }
     }
@@ -253,11 +290,9 @@ public class RPi1 extends AppCompatActivity {
         Log.d("kshitij","MAC Address: "+ macAddress);
 
         Log.d("kshitij","Entering pi1 provider");
-        pubNub = pubNubInitialisation();
+//        pubNub = pubNubInitialisation();
         Log.d("kshitij","After pubnub initialisation");
 
-//        String testSend = "Test send from android app to ClientTask";
-//        passClass.transmitObject.message = testSend;
         final PassClass passClass = new PassClass();
         TransmitObject transmitObject = new TransmitObject();
         passClass.transmitObject = transmitObject;
@@ -265,8 +300,7 @@ public class RPi1 extends AppCompatActivity {
         passClass.transmitObject.deviceType = "android";
 
 
-
-        pubNubSubscribe(pubNub);
+//        pubNubSubscribe(pubNub);
 
         Log.d("kshitij","After pubnub addListener");
         Log.d("kshitij","After pubnub subscribe");
@@ -276,30 +310,41 @@ public class RPi1 extends AppCompatActivity {
         final Switch yellow = findViewById(R.id.switchYellow);
         final Switch green = findViewById(R.id.switchGreen);
 
-        red.setEnabled(false);
-        yellow.setEnabled(false);
-        green.setEnabled(false);
+        final TextView redText = findViewById(R.id.textViewRed);
+        final TextView yellowText = findViewById(R.id.textViewYellow);
+        final TextView greenText = findViewById(R.id.textViewGreen);
 
+        red.setEnabled(redDis);
+        yellow.setEnabled(yellowDis);
+        green.setEnabled(greenDis);
         overRide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if(isChecked) {
-                    red.setEnabled(true);
-                    yellow.setEnabled(true);
-                    green.setEnabled(true);
+                    redDis=true;
+                    yellowDis=true;
+                    greenDis=true;
+                    red.setEnabled(redDis);
+                    yellow.setEnabled(yellowDis);
+                    green.setEnabled(greenDis);
                     overrideStatus = true;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getStatus("override")+"#red#"+getStatus("red")+"#yellow#"+getStatus("yellow")+"#green#"+getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getOnStatus("override")+"#red#"+getOnStatus("red")+"#yellow#"+getOnStatus("yellow")+"#green#"+getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask override if");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
                 else{
+                    redDis=false;
+                    yellowDis=false;
+                    greenDis=false;
                     overrideStatus = false;
-                    red.setEnabled(false);
-                    yellow.setEnabled(false);
-                    green.setEnabled(false);
+                    red.setEnabled(redDis);
+                    yellow.setEnabled(yellowDis);
+                    green.setEnabled(greenDis);
                     red.setChecked(false);
                     yellow.setChecked(false);
                     green.setChecked(false);
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getStatus("override")+"#red#"+getStatus("red")+"#yellow#"+getStatus("yellow")+"#green#"+getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getOnStatus("override")+"#red#"+getOnStatus("red")+"#yellow#"+getOnStatus("yellow")+"#green#"+getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask override else");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -307,57 +352,63 @@ public class RPi1 extends AppCompatActivity {
 
         red.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // do something, the isChecked will be
-                // true if the switch is in the On position
-                if(isChecked) {
+                if(isChecked && redDis==true) {
                     Log.d("kshitij", "Setting red to true");
                     redStatus = true;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    redText.setBackgroundColor(Color.parseColor("#fc2828"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask red if");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
-                else{
+                else if(redDis==true){
                     Log.d("kshitij", "Setting red to false");
                     redStatus = false;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    redText.setBackgroundColor(Color.parseColor("#ffffff"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask red else");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
 
         yellow.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // do something, the isChecked will be
-                // true if the switch is in the On position
-                if(isChecked) {
+                if(isChecked && yellowDis==true) {
                     Log.d("kshitij", "Setting yellow to true");
                     yellowStatus = true;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    yellowText.setBackgroundColor(Color.parseColor("#ffee00"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask yellow if");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
-                else{
+                else if(yellowDis==true){
                     Log.d("kshitij", "Setting yellow to false");
                     yellowStatus = false;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    yellowText.setBackgroundColor(Color.parseColor("#ffffff"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask yellow else");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
 
         green.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // do something, the isChecked will be
-                // true if the switch is in the On position
-                if(isChecked) {
+                if(isChecked && greenDis==true) {
                     Log.d("kshitij", "Setting green to true");
                     greenStatus = true;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    greenText.setBackgroundColor(Color.parseColor("#0ad100"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask green if");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
-                else{
+                else if(greenDis==true){
                     Log.d("kshitij", "Setting green to false");
                     greenStatus = false;
-                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getStatus("override")+"#red#" + getStatus("red") + "#yellow#" + getStatus("yellow") + "#green#" + getStatus("green");
-                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    greenText.setBackgroundColor(Color.parseColor("#ffffff"));
+                    passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
+                    Log.d("kshitij","Calling clientTask green else");
+//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
