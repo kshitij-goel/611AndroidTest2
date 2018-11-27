@@ -46,8 +46,8 @@ class GridAdapter extends BaseAdapter {
         }
 
         // 3
-        final ImageView imageView = (ImageView)convertView.findViewById(R.id.imageview_cover_art);
-        final TextView nameTextView = (TextView)convertView.findViewById(R.id.textview_book_name);
+        final ImageView imageView = (ImageView)convertView.findViewById(R.id.imageview_cover);
+        final TextView nameTextView = (TextView)convertView.findViewById(R.id.textview_image);
 
         // 4
         imageView.setImageResource(device.getImageResource());

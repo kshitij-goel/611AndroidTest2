@@ -12,17 +12,18 @@
         android:layout_height="wrap_content">
 
         <ImageView
-            android:id="@+id/imageview_cover_art"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="center"
+            android:id="@+id/imageview_cover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
             android:padding="5dp"
+            android:adjustViewBounds="true"
             android:contentDescription="TODO" />
 
     </FrameLayout>
 
     <TextView
-        android:id="@+id/textview_book_name"
+        android:id="@+id/textview_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="12sp"

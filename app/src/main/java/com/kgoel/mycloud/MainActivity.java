@@ -1,9 +1,6 @@
 package com.kgoel.mycloud;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,10 +21,7 @@ import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult;
 
 import org.json.JSONObject;
 
-import java.net.NetworkInterface;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 

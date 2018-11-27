@@ -119,12 +119,10 @@ public class RPi1 extends AppCompatActivity {
                 if (macBytes == null) {
                     return "";
                 }
-
                 StringBuilder res1 = new StringBuilder();
                 for (byte b : macBytes) {
                     res1.append(Integer.toHexString(b & 0xFF) + ":");
                 }
-
                 if (res1.length() > 0) {
                     res1.deleteCharAt(res1.length() - 1);
                 }
@@ -210,7 +208,7 @@ public class RPi1 extends AppCompatActivity {
                 String rec = passClass.transmitObject.message;
                 String[] recs = rec.split("#");
                 Log.d("kshitij","Updating UI with message: "+rec);
-                if(passClass.transmitObject.deviceType.compareTo("android")==0) {
+                if(passClass.transmitObject.deviceType.compareTo("android")==0 || passClass.transmitObject.deviceType.compareTo("webapp")==0) {
                     if (recs[3].compareTo("1") == 0 && recs[1].compareTo(macAddress) != 0) {
                         setDisStatus("dis", "dis", "dis", "dis");
                         publishProgress();
@@ -290,7 +288,7 @@ public class RPi1 extends AppCompatActivity {
         Log.d("kshitij","MAC Address: "+ macAddress);
 
         Log.d("kshitij","Entering pi1 provider");
-//        pubNub = pubNubInitialisation();
+        pubNub = pubNubInitialisation();
         Log.d("kshitij","After pubnub initialisation");
 
         final PassClass passClass = new PassClass();
@@ -300,7 +298,7 @@ public class RPi1 extends AppCompatActivity {
         passClass.transmitObject.deviceType = "android";
 
 
-//        pubNubSubscribe(pubNub);
+        pubNubSubscribe(pubNub);
 
         Log.d("kshitij","After pubnub addListener");
         Log.d("kshitij","After pubnub subscribe");
@@ -329,7 +327,7 @@ public class RPi1 extends AppCompatActivity {
                     overrideStatus = true;
                     passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getOnStatus("override")+"#red#"+getOnStatus("red")+"#yellow#"+getOnStatus("yellow")+"#green#"+getOnStatus("green");
                     Log.d("kshitij","Calling clientTask override if");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
                 else{
                     redDis=false;
@@ -344,7 +342,7 @@ public class RPi1 extends AppCompatActivity {
                     green.setChecked(false);
                     passClass.transmitObject.message = passClass.transmitObject.deviceType+"#"+macAddress+"#override#"+getOnStatus("override")+"#red#"+getOnStatus("red")+"#yellow#"+getOnStatus("yellow")+"#green#"+getOnStatus("green");
                     Log.d("kshitij","Calling clientTask override else");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -366,7 +364,7 @@ public class RPi1 extends AppCompatActivity {
                     redText.setBackgroundColor(Color.parseColor("#ffffff"));
                     passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
                     Log.d("kshitij","Calling clientTask red else");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -379,7 +377,7 @@ public class RPi1 extends AppCompatActivity {
                     yellowText.setBackgroundColor(Color.parseColor("#ffee00"));
                     passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
                     Log.d("kshitij","Calling clientTask yellow if");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
                 else if(yellowDis==true){
                     Log.d("kshitij", "Setting yellow to false");
@@ -387,7 +385,7 @@ public class RPi1 extends AppCompatActivity {
                     yellowText.setBackgroundColor(Color.parseColor("#ffffff"));
                     passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
                     Log.d("kshitij","Calling clientTask yellow else");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -400,7 +398,7 @@ public class RPi1 extends AppCompatActivity {
                     greenText.setBackgroundColor(Color.parseColor("#0ad100"));
                     passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
                     Log.d("kshitij","Calling clientTask green if");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
                 else if(greenDis==true){
                     Log.d("kshitij", "Setting green to false");
@@ -408,7 +406,7 @@ public class RPi1 extends AppCompatActivity {
                     greenText.setBackgroundColor(Color.parseColor("#ffffff"));
                     passClass.transmitObject.message = passClass.transmitObject.deviceType + "#" + macAddress + "#override#"+getOnStatus("override")+"#red#" + getOnStatus("red") + "#yellow#" + getOnStatus("yellow") + "#green#" + getOnStatus("green");
                     Log.d("kshitij","Calling clientTask green else");
-//                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
+                    new ClientTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, passClass);
                 }
             }
         });
@@ -417,21 +415,21 @@ public class RPi1 extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-//        pubNub.unsubscribeAll();
-//        new ServerTask().cancel(true);
+        pubNub.unsubscribeAll();
+        new ServerTask().cancel(true);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-//        pubNubSubscribe(pubNub);
-//        new ServerTask().cancel(false);
+        pubNubSubscribe(pubNub);
+        new ServerTask().cancel(false);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        pubNub.unsubscribeAll();
+        pubNub.unsubscribeAll();
     }
 
     private class PassClass {
