@@ -66,7 +66,7 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:text=""
-        android:layout_marginTop="70dp"
+        android:layout_marginTop="55dp"
         android:layout_marginEnd="300dp"
         tools:layout_editor_absoluteX="80dp"
         tools:layout_editor_absoluteY="199dp"
@@ -78,10 +78,22 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:text=""
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="55dp"
         android:layout_marginEnd="300dp"
         tools:layout_editor_absoluteX="80dp"
         tools:layout_editor_absoluteY="199dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewYellow" />
+
+    <TextView
+        android:id="@+id/textViewSensor"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:text=""
+        android:layout_marginTop="370dp"
+        android:layout_marginEnd="182dp"
+        tools:layout_editor_absoluteX="80dp"
+        tools:layout_editor_absoluteY="199dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/OverRide_Switch" />
 </android.support.constraint.ConstraintLayout>
