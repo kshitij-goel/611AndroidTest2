@@ -29,8 +29,8 @@ import java.util.List;
 
 public class RPi1 extends AppCompatActivity {
 
-    static final String subscriberKey = "sub-c-b3f1894c-b61b-11e8-9c8c-5aa277adf39c";
-    static final String publisherKey = "pub-c-a48eea9b-bec6-437f-a198-c629b1d05c4c";
+    static final String subscriberKey = "sub-x-key";
+    static final String publisherKey = "pub-x-key";
     static final String subscribeChannel = "Hub Channel";
     static final String publishChannel = "Mobile Channel";
     PubNub pubNub;
